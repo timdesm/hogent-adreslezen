@@ -10,6 +10,8 @@ namespace Adreslezen
    
     class Program
     {
+        public static int loadingTime = 0;
+
         public static Dictionary<int, AdresLocatie> locatie = new Dictionary<int, AdresLocatie>();
         public static Dictionary<String, Gemeente> gemeentes = new Dictionary<string, Gemeente>();
         public static Dictionary<int, Straatnaam> streets = new Dictionary<int, Straatnaam>();
@@ -28,8 +30,18 @@ namespace Adreslezen
             // FileUtil.UnZip(@"C:\Users\timde\source\repos\Adreslezen\Adreslezen\Data\CRAB_Adressenlijst_GML.zip", @"C:\Users\timde\source\repos\Adreslezen\Adreslezen\Data\Extract");
 
             // Run the progress thread
+            Console.WriteLine("--------------------------");
+            Console.WriteLine("Project created by Tim De Smet");
+            Console.WriteLine("HoGent Adreslezen");
+            Console.WriteLine("--------------------------");
+            Console.WriteLine(" ");
+            Console.WriteLine("Loading address data...");
+            Console.WriteLine(" ");
+
             var t = Task.Run(() => ProgressThread());
             // var tt = Task.Run(() => BuildCache());
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
 
             using (FileStream fs = File.Open(@"C:\Users\timde\source\repos\Data\Extract\GML\CrabAdr.gml", FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (BufferedStream bs = new BufferedStream(fs))
@@ -64,23 +76,30 @@ namespace Adreslezen
                 }
             }
 
+            watch.Stop();
             t.Wait();
 
+            // Search
             while (true)
             {
+                Console.Clear();
                 Console.WriteLine("[1] Search on City");
                 Console.WriteLine("[2] Search on Street");
+                Console.WriteLine("[3] City information");
+                Console.WriteLine("[4] Stats");
                 Console.Write("Search type: ");
                 String searchType = Console.ReadLine();
 
                 if (searchType.Equals("1"))
                 {
-                    Console.WriteLine(" ");
+                    Console.Clear();
                     Console.Write("Input a city name: ");
                     String arg1 = Console.ReadLine();
                     if (gemeentes.ContainsKey(arg1))
                     {
-                        Console.WriteLine("Found streets:");
+                        Console.Clear();
+                        Console.WriteLine("--------------------------");
+                        Console.WriteLine("(" + arg1 + ") - Found streets:");
                         Console.WriteLine("--------------------------");
                         foreach (Straatnaam straat in streets.Values)
                         {
@@ -89,11 +108,14 @@ namespace Adreslezen
                                 Console.WriteLine(straat.Streetname);
                             }
                         }
+                        Console.WriteLine("--------------------------");
+                        Console.WriteLine("Press ENTER to continue...");
+                        Console.ReadLine();
                     }
                 }
                 if (searchType.Equals("2"))
                 {
-                    Console.WriteLine(" ");
+                    Console.Clear();
                     Console.Write("Input a streetname: ");
                     String arg1 = Console.ReadLine();
                     List<Gemeente> gemeentes = new List<Gemeente>();
@@ -107,12 +129,64 @@ namespace Adreslezen
                             }
                         }
                     }
-                    Console.WriteLine("Found cities:");
+                    Console.Clear();
+                    Console.WriteLine("--------------------------");
+                    Console.WriteLine("(" + arg1 + ") - Found cities:");
                     Console.WriteLine("--------------------------");
                     foreach (Gemeente gemeente in gemeentes)
                     {
                         Console.WriteLine(gemeente.Gemeentenaam);
                     }
+                    Console.WriteLine("--------------------------");
+                    Console.WriteLine("Press ENTER to continue...");
+                    Console.ReadLine();
+                }
+                if (searchType.Equals("3"))
+                {
+                    Console.Clear();
+                    Console.Write("Input a city name: ");
+                    String arg1 = Console.ReadLine();
+                    if (gemeentes.ContainsKey(arg1))
+                    {
+                        Gemeente gemeente = gemeentes[arg1];
+                        Console.Clear();
+                        Console.WriteLine("--------------------------");
+                        Console.WriteLine("(" + arg1 + ") - Found information:");
+                        Console.WriteLine("--------------------------");
+                        Console.WriteLine("Name: " + gemeente.Gemeentenaam);
+                        Console.WriteLine("NisCode: " + gemeente.NIScode);
+                        Console.WriteLine("Postcode: N/A" );
+
+                        int strcount = 0;
+                        foreach (Straatnaam straat in streets.Values)
+                        {
+                            if (straat.Gemeente.Equals(gemeentes[arg1]))
+                            {
+                                ++strcount;
+                            }
+                        }
+
+                        Console.WriteLine("Total streets: " + strcount);
+                        Console.WriteLine("--------------------------");
+                        Console.WriteLine("Press ENTER to continue...");
+                        Console.ReadLine();
+
+                    }
+                }
+                if (searchType.Equals("4"))
+                {
+                    Console.Clear();
+                    Console.WriteLine("--------------------------");
+                    Console.WriteLine("Statistics:");
+                    Console.WriteLine("--------------------------");
+                    Console.WriteLine("Total lines: " + count);
+                    Console.WriteLine("Total addresses: " + addIds.Count);
+                    Console.WriteLine("Total cities: " + gemeentes.Count);
+                    Console.WriteLine("Total streets: " + streets.Count);
+                    Console.WriteLine("Loading time: " + watch.Elapsed.TotalSeconds + " sec.");
+                    Console.WriteLine("--------------------------");
+                    Console.WriteLine("Press ENTER to continue...");
+                    Console.ReadLine();
                 }
             }
         }
@@ -208,7 +282,6 @@ namespace Adreslezen
 
         static void ProgressThread()
         {
-            Console.Write("Loading data...");
             while (true)
             {
                 if((Convert.ToDouble((int)count) / 83550866) >= 1)
@@ -222,7 +295,7 @@ namespace Adreslezen
                 }
                 else
                 {
-                    drawTextProgressBar("Loading data...", count, 83550866);
+                    drawTextProgressBar("", count, 83550866);
                 }
                 Thread.Sleep(20);
             }
