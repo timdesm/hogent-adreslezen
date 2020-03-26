@@ -25,6 +25,12 @@ namespace Adreslezen
             this.Y = y;
         }
 
-
+        public override bool Equals(object obj)
+        {
+            if ((obj == null) || !this.GetType().Equals(obj.GetType())) return false;
+            AdresLocatie location = (AdresLocatie) obj;
+            if (this.X == location.X && this.Y == location.Y) return true;
+            return false;
+        }
     }
 }
